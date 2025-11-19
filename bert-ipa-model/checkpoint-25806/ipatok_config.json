@@ -1,0 +1,7 @@
+{
+  "strict": false,
+  "replace": true,
+  "diphthongs": false,
+  "tones": true,
+  "unknown": false
+}
