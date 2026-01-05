@@ -8,13 +8,10 @@ import pandas as pd
 from ipatok import tokenise
 from transformers import PreTrainedTokenizer
 
-# -----------------------------
-# ipatok config (same as baseline)
-# -----------------------------
 IPATOK_KW = dict(
     strict=False,
     replace=True,
-    diphthongs=False,  # True if you want aɪ, aʊ merged
+    diphthongs=False,  
     tones=True,
     unknown=False,
 )
@@ -22,9 +19,6 @@ IPATOK_KW = dict(
 SPECIAL_TOKENS = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
 SAVE_DIR = Path("./idk_bert/fixed_ipa_tokenizer")
 
-# -----------------------------
-# 1) Build vocab from corpus (only needed when creating the tokenizer folder)
-# -----------------------------
 def build_vocab_from_csv(csv_path: str) -> dict:
     df = pd.read_csv(csv_path)
     ipa_words = df["transcription"].astype(str).tolist()
@@ -37,9 +31,6 @@ def build_vocab_from_csv(csv_path: str) -> dict:
     vocab_list = [*SPECIAL_TOKENS] + sorted(vocab_set - set(SPECIAL_TOKENS))
     return {tok: i for i, tok in enumerate(vocab_list)}
 
-# -----------------------------
-# 2) HuggingFace-compatible tokenizer (slow) using ipatok
-# -----------------------------
 class IpatokHFTokenizer(PreTrainedTokenizer):
     def __init__(
         self,
@@ -111,8 +102,6 @@ class IpatokHFTokenizer(PreTrainedTokenizer):
         with open(path / "ipatok_config.json", "w", encoding="utf-8") as f:
             json.dump(self.ipatok_kwargs, f, ensure_ascii=False, indent=2)
         return (str(vocab_path),)
-
-    # ✅ custom loader so .from_pretrained("path") works
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, **kwargs):
         path = Path(pretrained_model_name_or_path)
@@ -125,9 +114,6 @@ class IpatokHFTokenizer(PreTrainedTokenizer):
                 ipatok_kwargs = json.load(f)
         return cls(vocab=vocab, ipatok_kwargs=ipatok_kwargs, **kwargs)
 
-# -----------------------------
-# 3) One-time build + save helper (run once)
-# -----------------------------
 def build_and_save_tokenizer(csv_path: str, save_dir: Path = SAVE_DIR):
     vocab = build_vocab_from_csv(csv_path)
     tok = IpatokHFTokenizer(vocab=vocab, ipatok_kwargs=IPATOK_KW)
@@ -135,7 +121,7 @@ def build_and_save_tokenizer(csv_path: str, save_dir: Path = SAVE_DIR):
     # demo print
     df = pd.read_csv(csv_path)
     sample = df["transcription"].astype(str).tolist()[:10]
-    print("✅ Tokenization examples (first 10):")
+    print("Tokenization examples (first 10):")
     for w in sample:
         toks = tok.tokenize(w)
         ids = tok.convert_tokens_to_ids(toks)
@@ -158,7 +144,5 @@ def build_and_save_tokenizer(csv_path: str, save_dir: Path = SAVE_DIR):
 
     print(f"Saved fixed tokenizer to '{save_dir}/'")
 
-# -----------------------------
-# If you want to (re)build the tokenizer folder, uncomment:
-build_and_save_tokenizer('Data/corpus_clean_train.csv')
-# -----------------------------
+build_and_save_tokenizer('Data/corpus_combined_new.csv')
+
