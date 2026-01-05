@@ -3,6 +3,7 @@ Adversarial Sound Symbolism Training - GRADIENT REVERSAL VERSION
 Baseline: Multi-task (learn size + bins)
 Adversarial: Learn size, scrub bins via gradient reversal with lambda ramping
 """
+#current configs are set for the baseline case (no adversarial pressure). set use_adversarial to True and lambda to 1.0 for adversarial case. 
 import os
 import json
 import numpy as np
@@ -15,10 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from transformers import BertModel
 from tokenizer import IpatokHFTokenizer
 
-
-
 # GRADIENT REVERSAL LAYER
-
 class GradientReversal(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x, lambda_):
@@ -304,10 +302,6 @@ def load_data_for_language(corpus_csv, bin_lookup_csv, target_language):
 
     return train_df, test_df
 
-
-# ============================================================================
-# MAIN TRAINING LOOP (with lambda ramp, NO validation)
-# ============================================================================
 def train_one_language(
     target_language, corpus_csv, bin_lookup_csv, config, output_dir, seed=42
 ):
@@ -440,10 +434,6 @@ def train_one_language(
         "final_train_bin_acc": float(last_row["train_bin_acc"]),
     }
 
-
-# ============================================================================
-# RUN EXPERIMENT
-# ============================================================================
 def run_all_languages(corpus_csv, bin_lookup_csv, config, output_dir, num_runs=15):
     """Run experiment on all languages"""
 
@@ -512,10 +502,9 @@ if __name__ == "__main__":
         "dropout": 0.1,
         "max_length": 64,
         "batch_size": 32,
-        "epochs": 20,        # fixed 20 epochs
+        "epochs": 20,        
         "lr": 1e-4,
         "use_adversarial": False,  # set to True for adversarial GRL mode
-        # lambda is the *max* GRL coefficient; ramped from ~0 -> lambda over epochs
         "lambda": 0.0,       # set to 1 for adv 
     }
 
